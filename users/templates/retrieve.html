@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load rest_framework %}
+<div class="album py-5 bg-body-tertiary">
+    <div class="container">
+
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+            <div class="col">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text"><strong>Пользователь с телефоном: {{ phone }}</strong></p>
+                        <p class="card-text">Ваш инвайт-код: {{ invite_code }}</p>
+                        <p class="card-text">Пользователь, который Вас пригласил: {{ invited_by }}</p>
+                        <p class="card-text">Пользователи, которых Вы пригласили: {% for referral in referrals %}{{ referral }} {% endfor %}</p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

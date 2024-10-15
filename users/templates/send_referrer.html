@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load rest_framework %}
+
+<div class="container">
+    <form class="row" method="post" enctype="multipart/form-data">
+        <div class="col-6">
+            <div class="card">
+                <div class="card-body">
+                    {% csrf_token %}
+                    <label>Введите инвайт-код<input type="text"/></label>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Отправить
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

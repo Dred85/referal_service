@@ -12,7 +12,7 @@ def create_invite_code():
     existing_codes = User.objects.values_list("invite_code", flat=True)
     alphabet = string.ascii_letters + string.digits
     while True:
-        code = ''
+        code = ""
         for _ in range(6):
             code += choice(alphabet)
         if code not in existing_codes:
@@ -22,12 +22,12 @@ def create_invite_code():
 
 def create_enter_code():
     """Создает код для входа в систему, который состоит из 4 случайных цифр"""
-    code = ''
+    code = ""
     for _ in range(4):
         code += choice(string.digits)
     return code
 
 
 def send_enter_code(phone, code):
-    print(f'phone: {phone} | code: {code}')
+    print(f"phone: {phone} | code: {code}")
     sleep(2)

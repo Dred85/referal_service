@@ -1,15 +1,14 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-
 schema_view = get_schema_view(
     openapi.Info(
-        title='Authentication and referral system',
-        default_version='v1',
-        description='',
+        title="Authentication and referral system",
+        default_version="v1",
+        description="",
         terms_of_service="https://www.google.com/policies/terms/",
         contact=openapi.Contact(email="contact@snippets.local"),
         license=openapi.License(name="BSD License"),
@@ -19,9 +18,8 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('users/', include('users.urls', namespace='users')),
-
+    path("admin/", admin.site.urls),
+    path("users/", include("users.urls", namespace="users")),
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),

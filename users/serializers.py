@@ -1,28 +1,29 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import (TokenObtainPairSerializer,
+                                                  TokenRefreshSerializer)
 
 User = get_user_model()
 
 
 class UserPhoneSerializer(serializers.ModelSerializer):
     """Сериализатор для номера телефона пользователя"""
+
     phone = serializers.CharField()
 
     class Meta:
         model = User
-        fields = [
-            'phone'
-        ]
+        fields = ["phone"]
 
 
 class UserRetrieveSerializer(serializers.ModelSerializer):
     """Сериализатор для получения данных пользователя"""
+
     referrals = serializers.SerializerMethodField()
     invited_by_code = serializers.SerializerMethodField()
 
     def get_referrals(self, obj):
-        return obj.referrals.values_list('phone', flat=True)
+        return obj.referrals.values_list("phone", flat=True)
 
     def get_invited_by_code(self, obj):
         referrer = obj.invited_by
@@ -32,7 +33,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['phone', 'referrals', 'invite_code', 'invited_by_code']
+        fields = ["phone", "referrals", "invite_code", "invited_by_code"]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -42,5 +43,5 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super(MyTokenObtainPairSerializer, cls).get_token(user)
 
         # добавление номера телефона в payload
-        token['phone'] = user.phone
+        token["phone"] = user.phone
         return token

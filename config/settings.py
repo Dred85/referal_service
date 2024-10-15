@@ -1,9 +1,8 @@
 import os
-
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,11 +21,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'drf_yasg',
-
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_yasg",
     "users",
 ]
 
@@ -105,9 +102,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "users.User"
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'UPDATE_LAST_LOGIN': True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "UPDATE_LAST_LOGIN": True,
 }
 
-AUTHENTICATION_BACKENDS = ['users.auth_backends.EnterCodeBackend']
+AUTHENTICATION_BACKENDS = ["users.auth_backends.EnterCodeBackend"]

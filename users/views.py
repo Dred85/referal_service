@@ -88,6 +88,10 @@ class UserGetEnterCodeMixin(GetOrCreateModelMixin):
         return created
 
 
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import status
+
 class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'get_code.html'
@@ -95,6 +99,16 @@ class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         serializer = self.serializer_class()
         return Response({'serializer': serializer})
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            self.perform_get_or_create(serializer)
+            message = "На указанный номер телефона выслан код для авторизации."
+            return Response({'serializer': serializer, 'message': message}, template_name=self.template_name)
+        # Если данные невалидны, возвращаем тот же сериализатор с ошибками
+        return Response({'serializer': serializer}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class MyTokenObtainPairView(TokenObtainPairView):

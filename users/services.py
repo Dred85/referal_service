@@ -16,7 +16,7 @@ User = get_user_model()
 
 def send_sms(phone: int, message: str) -> dict:
     """
-    Sends an SMS message
+    Отправка смс на номер телефона через службу SMS Aero
 
     Parameters:
     phone (int): The phone number to which the SMS message will be sent.
@@ -51,13 +51,15 @@ def create_enter_code():
 
 
 def send_enter_code(phone: object, code: object) -> object:
-    print(f"phone: {phone} | code: {code}")
+    print(f"Номер телефона: {phone}  код для авторизации: {code}")
     # Преобразуем наш номер из строки в int
     phone = int(phone)
     # Реально отправляем смс с кодом из 4 цифр на реальный номер
     try:
-        result = send_sms(phone, code)
-        pprint(result)
+        # result = send_sms(phone, code)
+        # pprint(result)
+        print(f'phone: {phone} | code: {code}')
+
     except SmsAeroException as e:
         print(f"Произошла ошибка: {e}")
     sleep(2)

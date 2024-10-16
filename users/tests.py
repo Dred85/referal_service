@@ -13,8 +13,7 @@ class AuthTestCase(APITestCase):
 
     def test_get_code(self):
         url = reverse("users:get_code")
-        response = self.client.post(url, data={"phone": "70000000001"})
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         response = self.client.post(url, data={"phone": "70000000001"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

@@ -11,6 +11,11 @@ class UserPhoneSerializer(serializers.ModelSerializer):
 
     phone = serializers.CharField()
 
+    def validate_phone(self, value):
+        if len(value) != 11 or not value.isdigit():
+            raise serializers.ValidationError("Номер телефона должен состоять из 11 цифр.")
+        return value
+
     class Meta:
         model = User
         fields = ["phone"]

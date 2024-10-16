@@ -12,6 +12,7 @@ from users.services import create_enter_code, create_invite_code, send_enter_cod
 
 User = get_user_model()
 
+
 class GetOrCreateModelMixin:
     """
     Миксин для обработки создания или получения объекта модели.
@@ -41,7 +42,7 @@ class GetOrCreateModelMixin:
     def perform_get_or_create(self, serializer):
         """
         Выполняет логику создания или получения объекта.
-        Должен быть переопределен в наследующих классах.
+
 
         :param serializer: Сериализатор с валидированными данными
         :raises NotImplementedError: Если метод не переопределен
@@ -77,6 +78,7 @@ class UserGetEnterCodeMixin(GetOrCreateModelMixin):
     serializer_class = UserPhoneSerializer
 
     def perform_get_or_create(self, serializer):
+        """Метод пытается получить существующего пользователя или создать нового, если такого нет."""
         user, created = self.model.objects.get_or_create(**serializer.validated_data,
                                                          defaults={"invite_code": create_invite_code()})
         enter_code = create_enter_code()

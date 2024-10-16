@@ -20,20 +20,24 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
     """Сериализатор для получения данных пользователя"""
 
     referrals = serializers.SerializerMethodField()
-    invited_by_code = serializers.SerializerMethodField()
+    invited_by_phone = serializers.SerializerMethodField()
 
     def get_referrals(self, obj):
+        """ метод получает объект пользователя (obj) и возвращает список номеров телефонов пользователей,
+        которые являются его рефералами."""
         return obj.referrals.values_list("phone", flat=True)
 
-    def get_invited_by_code(self, obj):
+    def get_invited_by_phone(self, obj):
+        """Этот метод проверяет, есть ли у пользователя invited_by (т.е. реферер).
+        Если реферер есть, он возвращает его invite_code. Если реферера нет, возвращается None."""
         referrer = obj.invited_by
         if referrer:
-            return referrer.invite_code
+            return referrer.phone
         return None
 
     class Meta:
         model = User
-        fields = ["phone", "referrals", "invite_code", "invited_by_code"]
+        fields = ["phone", "referrals", "invite_code", "invited_by_phone"]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

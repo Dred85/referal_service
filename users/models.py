@@ -27,6 +27,7 @@ class User(AbstractUser):
 
     invite_code = models.CharField(
         max_length=6,
+        unique=True,
         verbose_name="Инвайт-код",
         help_text="Автоматически генерируется при регистрации",
     )

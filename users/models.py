@@ -1,16 +1,23 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import RegexValidator
 
 NULLABLE = {"null": True, "blank": True}
 
+# Валидатор для номера телефона
+phone_validator = RegexValidator(
+    regex=r'^\d{11}$',
+    message="Номер телефона должен состоять из 11 цифр."
+)
 
 class User(AbstractUser):
     username = None
     phone = models.CharField(
-        max_length=12,
+        max_length=11,  # Максимальная длина номера телефона
         unique=True,
+        validators=[phone_validator],  # Добавление валидатора
         verbose_name="Номер телефона",
-        help_text="Укажите номер телефона",
+        help_text="Укажите 11 цифр Вашего номера телефона, пример: 70000000001",
     )
     email = models.EmailField(
         unique=True, verbose_name="Email", help_text="Укажите email", **NULLABLE

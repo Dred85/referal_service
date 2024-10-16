@@ -112,3 +112,6 @@ SIMPLE_JWT = {
 }
 
 AUTHENTICATION_BACKENDS = ["users.auth_backends.EnterCodeBackend"]
+
+SMSAERO_EMAIL = os.getenv("SMSAERO_EMAIL")
+SMSAERO_API_KEY = os.getenv("SMSAERO_API_KEY")

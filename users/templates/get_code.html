@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% block content %}
 {% load rest_framework %}
@@ -10,6 +9,9 @@
                 <div class="card-body">
                     {% csrf_token %}
                     {% render_form serializer %}
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
                 </div>
                 <button type="submit" class="btn btn-primary">
                     Получить код

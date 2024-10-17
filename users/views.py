@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status, views
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response

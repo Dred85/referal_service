@@ -1,17 +1,14 @@
 import string
+from pprint import pprint
 from random import choice
 from time import sleep
 
 from django.contrib.auth import get_user_model
-
-from pprint import pprint
 from smsaero import SmsAero, SmsAeroException
 
-from config.settings import SMSAERO_EMAIL, SMSAERO_API_KEY
+from config.settings import SMSAERO_API_KEY, SMSAERO_EMAIL
 
 User = get_user_model()
-
-
 
 
 def send_sms(phone: int, message: str) -> dict:
@@ -58,11 +55,8 @@ def send_enter_code(phone: object, code: object) -> object:
     try:
         # result = send_sms(phone, code)
         # pprint(result)
-        print(f'phone: {phone} | code: {code}')
+        print(f"phone: {phone} | code: {code}")
 
     except SmsAeroException as e:
         print(f"Произошла ошибка: {e}")
     sleep(2)
-
-
-

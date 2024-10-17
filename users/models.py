@@ -1,14 +1,14 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.validators import RegexValidator
+from django.db import models
 
 NULLABLE = {"null": True, "blank": True}
 
 # Валидатор для номера телефона
 phone_validator = RegexValidator(
-    regex=r'^\d{11}$',
-    message="Номер телефона должен состоять из 11 цифр."
+    regex=r"^\d{11}$", message="Номер телефона должен состоять из 11 цифр."
 )
+
 
 class User(AbstractUser):
     username = None

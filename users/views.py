@@ -214,24 +214,33 @@ class SetReferrerAPIView(views.APIView):
     def post(self, request):
         """
         Обрабатывает POST-запрос для установки реферала.
-
         :param request: Запрос от клиента
         :return: Response с результатом установки реферала
         """
         invite_code = request.data.get("invite_code", "")
         referral = request.user
+
+        if not invite_code:
+            return Response({"error": "Инвайт-код не может быть пустым"}, status=status.HTTP_400_BAD_REQUEST)
+
         if referral.invite_code == invite_code:
             return Response(
-                {"message": "Вы не можете ввести свой собственный инвайт-код"}
+                {"message": "Вы не можете ввести свой собственный инвайт-код"},
+                status=status.HTTP_400_BAD_REQUEST
             )
         if referral.invited_by is not None:
             return Response(
                 {
                     "message": f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
-                }
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
 
-        referer = get_object_or_404(User.objects.filter(invite_code=invite_code))
+        try:
+            referer = User.objects.get(invite_code=invite_code)
+        except User.DoesNotExist:
+            return Response({"error": "Пользователь с указанным инвайт-кодом не найден"},
+                            status=status.HTTP_404_NOT_FOUND)
 
         referral.invited_by = referer
         referral.save()
@@ -244,7 +253,6 @@ class SetReferrerAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
         """
         Обрабатывает GET-запрос, возвращая информацию о реферале.
-
         :param request: Запрос от клиента
         :return: Response с информацией о реферале
         """

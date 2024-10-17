@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import (TokenObtainPairSerializer,
-                                                  TokenRefreshSerializer)
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -53,11 +52,15 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             return referrer.invite_code  # Возвращаем код реферера
         return "У Вас нет кода от реферера"
 
-
-
     class Meta:
         model = User
-        fields = ["phone", "referrals", "invite_code", "invited_by_phone", "invite_code_referer"]
+        fields = [
+            "phone",
+            "referrals",
+            "invite_code",
+            "invited_by_phone",
+            "invite_code_referer",
+        ]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

@@ -51,8 +51,8 @@ def send_enter_code(phone: object, code: object) -> object:
     print(f"Номер телефона: {phone}  код для авторизации: {code}")
     # Преобразуем наш номер из строки в int
     phone = int(phone)
-    # Реально отправляем смс с кодом из 4 цифр на реальный номер
     try:
+        # Реально отправляем смс с кодом из 4 цифр на реальный номер
         # result = send_sms(phone, code)
         # pprint(result)
         print(f"phone: {phone} | code: {code}")

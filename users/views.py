@@ -5,10 +5,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView)
 
-from users.serializers import MyTokenObtainPairSerializer, UserPhoneSerializer, UserRetrieveSerializer
-from users.services import create_enter_code, create_invite_code, send_enter_code
+from users.serializers import (MyTokenObtainPairSerializer,
+                               UserPhoneSerializer, UserRetrieveSerializer)
+from users.services import (create_enter_code, create_invite_code,
+                            send_enter_code)
 
 User = get_user_model()
 
@@ -18,36 +21,28 @@ class GetOrCreateModelMixin:
     Миксин для обработки создания или получения объекта модели.
     """
 
+    def perform_get_or_create(self, serializer):
+        """
+        Выполняет логику создания или получения объекта. Требуется переопределить.
+        """
+        raise NotImplementedError
+
     def get_or_create(self, request, *args, **kwargs):
         """
         Получает или создает объект модели на основе данных запроса.
-
-        :param request: Запрос от клиента
-        :param args: Дополнительные аргументы
-        :param kwargs: Дополнительные ключевые аргументы
-        :return: Response с сериализованными данными
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         created = self.perform_get_or_create(serializer)
+
         if created:
-            headers = self.get_success_headers(request.data)
+            headers = self.get_success_headers(serializer.validated_data)
             return Response(
-                {"serializer": serializer},
+                {"serializer": serializer.data},
                 status=status.HTTP_201_CREATED,
                 headers=headers,
             )
-        return Response({"serializer": serializer}, status=status.HTTP_200_OK)
-
-    def perform_get_or_create(self, serializer):
-        """
-        Выполняет логику создания или получения объекта.
-
-
-        :param serializer: Сериализатор с валидированными данными
-        :raises NotImplementedError: Если метод не переопределен
-        """
-        raise NotImplementedError
+        return Response({"serializer": serializer.data}, status=status.HTTP_200_OK)
 
     def get_success_headers(self, data):
         """
@@ -74,41 +69,59 @@ class GetOrCreateModelMixin:
 
 
 class UserGetEnterCodeMixin(GetOrCreateModelMixin):
+    """Миксин для получения или создания кода входа для пользователя."""
     model = User
     serializer_class = UserPhoneSerializer
 
     def perform_get_or_create(self, serializer):
         """Метод пытается получить существующего пользователя или создать нового, если такого нет."""
-        user, created = self.model.objects.get_or_create(**serializer.validated_data,
-                                                         defaults={"invite_code": create_invite_code()})
+        user, created = self.model.objects.get_or_create(
+            **serializer.validated_data, defaults={"invite_code": create_invite_code()}
+        )
         enter_code = create_enter_code()
         self.request.session[user.phone] = enter_code
         send_enter_code(user.phone, enter_code)
-
         return created
 
 
 class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
+    """
+    APIView для получения и отправки кода для авторизации на указанный номер телефона.
+    """
     renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'get_code.html'
+    template_name = "get_code.html"
 
     def get(self, request, *args, **kwargs):
+        """
+        Возвращает форму для ввода номера телефона и получения кода.
+        """
         serializer = self.serializer_class()
-        return Response({'serializer': serializer})
+        return Response({"serializer": serializer})
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            self.perform_get_or_create(serializer)
+            created = self.perform_get_or_create(serializer)
             message = "На указанный номер телефона выслан код для авторизации."
-            return Response({'serializer': serializer, 'message': message}, template_name=self.template_name)
+            if created:
+                return Response(
+                    {"serializer": serializer, "message": message},
+                    status=status.HTTP_201_CREATED,
+                    template_name=self.template_name,
+                )
+            return Response(
+                {"serializer": serializer, "message": "Код отправлен повторно."},
+                status=status.HTTP_200_OK,
+                template_name=self.template_name,
+            )
+
         # Если данные невалидны, возвращаем тот же сериализатор с ошибками
-        return Response({'serializer': serializer}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
     """
-    Представление для получения токена по номеру телефона.
+    Представление для получения токенов по номеру телефона.
     """
 
     renderer_classes = [TemplateHTMLRenderer]
@@ -201,22 +214,33 @@ class SetReferrerAPIView(views.APIView):
     def post(self, request):
         """
         Обрабатывает POST-запрос для установки реферала.
-
         :param request: Запрос от клиента
         :return: Response с результатом установки реферала
         """
         invite_code = request.data.get("invite_code", "")
         referral = request.user
+
+        if not invite_code:
+            return Response({"error": "Инвайт-код не может быть пустым"}, status=status.HTTP_400_BAD_REQUEST)
+
         if referral.invite_code == invite_code:
-            return Response({"message": "Вы не можете ввести свой собственный инвайт-код"})
+            return Response(
+                {"message": "Вы не можете ввести свой собственный инвайт-код"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         if referral.invited_by is not None:
             return Response(
                 {
                     "message": f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
-                }
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
 
-        referer = get_object_or_404(User.objects.filter(invite_code=invite_code))
+        try:
+            referer = User.objects.get(invite_code=invite_code)
+        except User.DoesNotExist:
+            return Response({"error": "Пользователь с указанным инвайт-кодом не найден"},
+                            status=status.HTTP_404_NOT_FOUND)
 
         referral.invited_by = referer
         referral.save()
@@ -229,7 +253,6 @@ class SetReferrerAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
         """
         Обрабатывает GET-запрос, возвращая информацию о реферале.
-
         :param request: Запрос от клиента
         :return: Response с информацией о реферале
         """

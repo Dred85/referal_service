@@ -13,7 +13,9 @@ class UserPhoneSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         if len(value) != 11 or not value.isdigit():
-            raise serializers.ValidationError("Номер телефона должен состоять из 11 цифр.")
+            raise serializers.ValidationError(
+                "Номер телефона должен состоять из 11 цифр."
+            )
         return value
 
     class Meta:
@@ -26,23 +28,36 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 
     referrals = serializers.SerializerMethodField()
     invited_by_phone = serializers.SerializerMethodField()
+    invite_code_referer = serializers.SerializerMethodField()
 
     def get_referrals(self, obj):
-        """ метод получает объект пользователя (obj) и возвращает список номеров телефонов пользователей,
+        """Метод получает объект пользователя (obj) и возвращает список номеров телефонов пользователей,
         которые являются его рефералами."""
         return obj.referrals.values_list("phone", flat=True)
 
     def get_invited_by_phone(self, obj):
         """Этот метод проверяет, есть ли у пользователя invited_by (т.е. реферер).
-        Если реферер есть, он возвращает его invite_code. Если реферера нет, возвращается None."""
+        Если реферер есть, он возвращает его номер телефона. Если реферера нет, возвращается "У Вас нет реферера".
+        """
         referrer = obj.invited_by
         if referrer:
-            return referrer.phone
-        return None
+            return referrer.phone  # Возвращаем номер телефона реферера
+        return "У Вас нет реферера"
+
+    def get_invite_code_referer(self, obj):
+        """Этот метод проверяет, есть ли у пользователя invited_by (т.е. реферер).
+        Если реферер есть, он возвращает его invite_code. Если реферера нет, возвращается "У Вас нет кода от реферера".
+        """
+        referrer = obj.invited_by
+        if referrer:
+            return referrer.invite_code  # Возвращаем код реферера
+        return "У Вас нет кода от реферера"
+
+
 
     class Meta:
         model = User
-        fields = ["phone", "referrals", "invite_code", "invited_by_phone"]
+        fields = ["phone", "referrals", "invite_code", "invited_by_phone", "invite_code_referer"]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

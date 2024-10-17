@@ -87,8 +87,9 @@ response:
    
 {   
   "phone": "79000000000",     
-  "invite_code": "7hjCdO",    
-  "invited_by_code": null,    
+  "invite_code": "1BBBBB1",    
+  "invited_by_phone": "79000000001",
+  "invite_code_referer": "0AAAAA0"
   "referrals": [    
     "79000000001",    
     "79000000002"    

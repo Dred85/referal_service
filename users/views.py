@@ -69,6 +69,7 @@ class GetOrCreateModelMixin:
 
 
 class UserGetEnterCodeMixin(GetOrCreateModelMixin):
+    """Миксин для получения или создания кода входа для пользователя."""
     model = User
     serializer_class = UserPhoneSerializer
 
@@ -84,22 +85,36 @@ class UserGetEnterCodeMixin(GetOrCreateModelMixin):
 
 
 class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
+    """
+    APIView для получения и отправки кода для авторизации на указанный номер телефона.
+    """
     renderer_classes = [TemplateHTMLRenderer]
     template_name = "get_code.html"
 
     def get(self, request, *args, **kwargs):
+        """
+        Возвращает форму для ввода номера телефона и получения кода.
+        """
         serializer = self.serializer_class()
         return Response({"serializer": serializer})
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            self.perform_get_or_create(serializer)
+            created = self.perform_get_or_create(serializer)
             message = "На указанный номер телефона выслан код для авторизации."
+            if created:
+                return Response(
+                    {"serializer": serializer, "message": message},
+                    status=status.HTTP_201_CREATED,
+                    template_name=self.template_name,
+                )
             return Response(
-                {"serializer": serializer, "message": message},
+                {"serializer": serializer, "message": "Код отправлен повторно."},
+                status=status.HTTP_200_OK,
                 template_name=self.template_name,
             )
+
         # Если данные невалидны, возвращаем тот же сериализатор с ошибками
         return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
 

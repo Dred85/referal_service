@@ -53,11 +53,15 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             return referrer.invite_code  # Возвращаем код реферера
         return "У Вас нет кода от реферера"
 
-
-
     class Meta:
         model = User
-        fields = ["phone", "referrals", "invite_code", "invited_by_phone", "invite_code_referer"]
+        fields = [
+            "phone",
+            "referrals",
+            "invite_code",
+            "invited_by_phone",
+            "invite_code_referer",
+        ]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

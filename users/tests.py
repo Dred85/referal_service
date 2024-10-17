@@ -114,7 +114,9 @@ class AuthTestCase(APITestCase):
         Проверяет установку реферала с невалидным инвайт-кодом.
         Ожидаем статус 400 Bad Request для пустого кода и 404 Not Found для неверного кода.
         """
-        url = reverse("users:set_referrer")  # Убедитесь, что вы используете правильный URL
+        url = reverse(
+            "users:set_referrer"
+        )  # Убедитесь, что вы используете правильный URL
         response = self.client.post(url, data={"invite_code": ""})  # Пустой инвайт-код
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)

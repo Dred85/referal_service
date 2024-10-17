@@ -70,6 +70,7 @@ class GetOrCreateModelMixin:
 
 class UserGetEnterCodeMixin(GetOrCreateModelMixin):
     """Миксин для получения или создания кода входа для пользователя."""
+
     model = User
     serializer_class = UserPhoneSerializer
 
@@ -88,6 +89,7 @@ class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
     """
     APIView для получения и отправки кода для авторизации на указанный номер телефона.
     """
+
     renderer_classes = [TemplateHTMLRenderer]
     template_name = "get_code.html"
 
@@ -221,26 +223,31 @@ class SetReferrerAPIView(views.APIView):
         referral = request.user
 
         if not invite_code:
-            return Response({"error": "Инвайт-код не может быть пустым"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Инвайт-код не может быть пустым"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if referral.invite_code == invite_code:
             return Response(
                 {"message": "Вы не можете ввести свой собственный инвайт-код"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
         if referral.invited_by is not None:
             return Response(
                 {
                     "message": f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
             referer = User.objects.get(invite_code=invite_code)
         except User.DoesNotExist:
-            return Response({"error": "Пользователь с указанным инвайт-кодом не найден"},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Пользователь с указанным инвайт-кодом не найден"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         referral.invited_by = referer
         referral.save()

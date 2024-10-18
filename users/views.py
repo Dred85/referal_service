@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status, views
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework_simplejwt.views import (TokenObtainPairView,
@@ -87,9 +87,10 @@ class UserGetEnterCodeMixin(GetOrCreateModelMixin):
 class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
     """
     APIView для получения и отправки кода для авторизации на указанный номер телефона.
+    Возвращает либо JSON, либо HTML в зависимости от заголовков запроса.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "get_code.html"
 
     def get(self, request, *args, **kwargs):
@@ -97,27 +98,48 @@ class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
         Возвращает форму для ввода номера телефона и получения кода.
         """
         serializer = self.serializer_class()
-        return Response({"serializer": serializer})
+
+        # Проверяем, что рендер используется для HTML
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, template_name=self.template_name)
+        # Возвращаем данные в формате JSON
+        return Response({"serializer": serializer.data})
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
+
         if serializer.is_valid():
             created = self.perform_get_or_create(serializer)
             message = "На указанный номер телефона выслан код для авторизации."
+
             if created:
+                if request.accepted_renderer.format == 'html':
+                    return Response(
+                        {"serializer": serializer, "message": message},
+                        status=status.HTTP_201_CREATED,
+                        template_name=self.template_name,
+                    )
                 return Response(
-                    {"serializer": serializer, "message": message},
+                    {"serializer": serializer.data, "message": message},
                     status=status.HTTP_201_CREATED,
+                )
+
+            if request.accepted_renderer.format == 'html':
+                return Response(
+                    {"serializer": serializer, "message": "Код отправлен повторно."},
+                    status=status.HTTP_200_OK,
                     template_name=self.template_name,
                 )
             return Response(
-                {"serializer": serializer, "message": "Код отправлен повторно."},
+                {"serializer": serializer.data, "message": "Код отправлен повторно."},
                 status=status.HTTP_200_OK,
-                template_name=self.template_name,
             )
 
-        # Если данные невалидны, возвращаем тот же сериализатор с ошибками
-        return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
+        # Если данные невалидны, возвращаем ошибку
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST,
+                            template_name=self.template_name)
+        return Response({"serializer": serializer.data}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyTokenObtainPairView(TokenObtainPairView):

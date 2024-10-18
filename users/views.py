@@ -189,7 +189,7 @@ class MyTokenRefreshView(TokenRefreshView):
     Представление для обновления токена.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "refresh.html"
     permission_classes = (AllowAny,)
 
@@ -202,15 +202,36 @@ class MyTokenRefreshView(TokenRefreshView):
         :param kwargs: Дополнительные ключевые аргументы
         :return: Response с новым токеном или ошибками
         """
-        serializer = self.get_serializer_class()()
-        print(
-            *[
-                f"{k}: {v}"
-                for k, v in super().post(request, *args, **kwargs).data.items()
-            ],
-            sep="\n",
-        )
-        return Response({"serializer": serializer})
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            token_data = serializer.validated_data
+
+            # Печать токенов для дебага (можно удалить позже)
+            print(
+                *[
+                    f"{k}: {v}"
+                    for k, v in token_data.items()
+                ],
+                sep="\n",
+            )
+
+            # Возвращаем JSON или HTML в зависимости от заголовка Accept
+            if request.accepted_renderer.format == 'html':
+                return Response(
+                    {"serializer": serializer, "token_data": token_data},
+                    template_name=self.template_name,
+                    status=status.HTTP_200_OK
+                )
+            return Response(token_data, status=status.HTTP_200_OK)
+
+        # Если данные невалидны, возвращаем ошибки в формате JSON или HTML
+        if request.accepted_renderer.format == 'html':
+            return Response(
+                {"serializer": serializer, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+                template_name=self.template_name
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, *args, **kwargs):
         """
@@ -222,8 +243,7 @@ class MyTokenRefreshView(TokenRefreshView):
         :return: Response с формой
         """
         serializer = self.get_serializer_class()()
-        return Response({"serializer": serializer})
-
+        return Response({"serializer": serializer}, template_name=self.template_name)
 
 class SetReferrerAPIView(views.APIView):
     """
@@ -231,7 +251,7 @@ class SetReferrerAPIView(views.APIView):
     """
 
     permission_classes = [IsAuthenticated]
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "set_referrer.html"
 
     def post(self, request):
@@ -244,39 +264,27 @@ class SetReferrerAPIView(views.APIView):
         referral = request.user
 
         if not invite_code:
-            return Response(
-                {"error": "Инвайт-код не может быть пустым"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = "Инвайт-код не может быть пустым"
+            return self._build_response({"error": error_message}, status.HTTP_400_BAD_REQUEST)
 
         if referral.invite_code == invite_code:
-            return Response(
-                {"message": "Вы не можете ввести свой собственный инвайт-код"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = "Вы не можете ввести свой собственный инвайт-код"
+            return self._build_response({"message": error_message}, status.HTTP_400_BAD_REQUEST)
+
         if referral.invited_by is not None:
-            return Response(
-                {
-                    "message": f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
+            return self._build_response({"message": error_message}, status.HTTP_400_BAD_REQUEST)
 
         try:
             referer = User.objects.get(invite_code=invite_code)
         except User.DoesNotExist:
-            return Response(
-                {"error": "Пользователь с указанным инвайт-кодом не найден"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            error_message = "Пользователь с указанным инвайт-кодом не найден"
+            return self._build_response({"error": error_message}, status.HTTP_404_NOT_FOUND)
 
         referral.invited_by = referer
         referral.save()
-        return Response(
-            {
-                "message": f"Вы стали рефералом пользователя с инвайт-кодом {referer.invite_code}"
-            }
-        )
+        success_message = f"Вы стали рефералом пользователя с инвайт-кодом {referer.invite_code}"
+        return self._build_response({"message": success_message})
 
     def get(self, request, *args, **kwargs):
         """
@@ -284,7 +292,22 @@ class SetReferrerAPIView(views.APIView):
         :param request: Запрос от клиента
         :return: Response с информацией о реферале
         """
-        return Response()
+        referral = request.user.invited_by
+        if referral:
+            referrer_info = f"Ваш реферер: {referral.invite_code}"
+            return self._build_response({"message": referrer_info})
+        return self._build_response({"message": "У вас нет реферера"})
+
+    def _build_response(self, data, status_code=status.HTTP_200_OK):
+        """
+        Вспомогательный метод для построения ответа с поддержкой как HTML, так и JSON форматов.
+        :param data: Данные для ответа
+        :param status_code: HTTP статус код
+        :return: Response объект
+        """
+        if self.request.accepted_renderer.format == 'html':
+            return Response(data, status=status_code, template_name=self.template_name)
+        return Response(data, status=status_code)
 
 
 class UserRetrieveAPIView(generics.RetrieveAPIView):

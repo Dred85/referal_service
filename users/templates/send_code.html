@@ -8,6 +8,12 @@
                 <div class="card-body">
                     {% csrf_token %}
                     {% render_form serializer %}
+                    {% if tokens %}
+                    <div class="alert alert-info">
+                        <p>Refresh Token: {{ tokens.refresh }}</p>
+                        <p>Access Token: {{ tokens.access }}</p>
+                    </div>
+                    {% endif %}
                 </div>
                 <button type="submit" class="btn btn-primary">
                     Отправить код

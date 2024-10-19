@@ -148,7 +148,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
     Представление для получения токенов по номеру телефона.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     template_name = "send_code.html"
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
@@ -162,15 +162,28 @@ class MyTokenObtainPairView(TokenObtainPairView):
         :param kwargs: Дополнительные ключевые аргументы
         :return: Response с токеном или ошибками
         """
-        serializer = self.serializer_class()
+        # Получаем результат работы метода суперкласса
+        response = super().post(request, *args, **kwargs)
+
+        # Извлекаем данные токенов из ответа
+        tokens = response.data
+
+        # Печатаем токены для отладки
         print(
-            *[
-                f"{k}: {v}"
-                for k, v in super().post(request, *args, **kwargs).data.items()
-            ],
+            *[f"{k}: {v}" for k, v in tokens.items()],
             sep="\n",
         )
-        return Response({"serializer": serializer})
+
+        # Определяем формат ответа
+        if request.accepted_renderer.format == 'html':
+            serializer = self.serializer_class()
+            return Response(
+                {"serializer": serializer, "tokens": tokens},
+                status=status.HTTP_200_OK,
+                template_name=self.template_name
+            )
+        else:
+            return Response(tokens, status=status.HTTP_200_OK)
 
     def get(self, request, *args, **kwargs):
         """
@@ -182,7 +195,10 @@ class MyTokenObtainPairView(TokenObtainPairView):
         :return: Response с формой
         """
         serializer = self.serializer_class()
-        return Response({"serializer": serializer})
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, template_name=self.template_name)
+        else:
+            return Response({"detail": "This endpoint is for token submission."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyTokenRefreshView(TokenRefreshView):

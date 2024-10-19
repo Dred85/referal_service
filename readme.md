@@ -85,16 +85,14 @@ request:
 GET /users/retrieve/   
 response:   
    
-{   
-  "phone": "79000000000",     
-  "invite_code": "1BBBBB1",    
-  "invited_by_phone": "79000000001",
-  "invite_code_referer": "0AAAAA0"
-  "referrals": [    
-    "79000000001",    
-    "79000000002"    
-  ]    
-}    
+{
+    "phone": "79444444446",
+    "referrals": ["+79000000002", "+79000000003"],
+    "invite_code": "vIIaww",
+    "invited_by_phone": "+79000000001",
+    "invite_code_referer": "cAXcJR"
+}  
+   
 Описание: Возвращает данные текущего пользователя, в том числе его рефералов    
 
 request:   

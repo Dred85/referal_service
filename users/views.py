@@ -333,7 +333,7 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
     """
     serializer_class = UserRetrieveSerializer
     permission_classes = [IsAuthenticated]
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]  # Добавляем JSONRenderer
     template_name = "retrieve.html"
 
     def get_object(self):
@@ -342,3 +342,17 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
         :return: Текущий пользователь
         """
         return self.request.user
+
+    def get(self, request, *args, **kwargs):
+        """
+        Переопределяем метод GET для возврата JSON или HTML в зависимости от заголовка запроса.
+        """
+        user = self.get_object()
+        serializer = self.get_serializer(user)
+
+        # Проверяем, какой рендер используется (html или json)
+        if request.accepted_renderer.format == 'html':
+            # Передаем сериализатор и его данные в шаблон
+            return Response({"serializer": serializer, "user": serializer.data}, template_name=self.template_name)
+        # Если запрос на JSON, возвращаем данные пользователя в формате JSON
+        return Response(serializer.data)

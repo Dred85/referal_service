@@ -125,8 +125,9 @@ class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
                 )
 
             if request.accepted_renderer.format == 'html':
+                message = "Код отправлен повторно."
                 return Response(
-                    {"serializer": serializer, "message": "Код отправлен повторно."},
+                    {"serializer": serializer, "message": message},
                     status=status.HTTP_200_OK,
                     template_name=self.template_name,
                 )
@@ -314,7 +315,6 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
     """
     Представление для получения профиля пользователя.
     """
-
     serializer_class = UserRetrieveSerializer
     permission_classes = [IsAuthenticated]
     renderer_classes = [TemplateHTMLRenderer]
@@ -323,7 +323,6 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
     def get_object(self):
         """
         Возвращает текущего пользователя.
-
         :return: Текущий пользователь
         """
         return self.request.user

@@ -40,7 +40,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         """
         referrer = obj.invited_by
         if referrer:
-            return referrer.phone  # Возвращаем номер телефона реферера
+            return f"+{referrer.phone}" # Возвращаем номер телефона реферера
         return "У Вас нет реферера"
 
     def get_invite_code_referer(self, obj):

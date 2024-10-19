@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status, views
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework_simplejwt.views import (TokenObtainPairView,
@@ -87,9 +87,10 @@ class UserGetEnterCodeMixin(GetOrCreateModelMixin):
 class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
     """
     APIView для получения и отправки кода для авторизации на указанный номер телефона.
+    Возвращает либо JSON, либо HTML в зависимости от заголовков запроса.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "get_code.html"
 
     def get(self, request, *args, **kwargs):
@@ -97,27 +98,49 @@ class UserGetCodeAPIView(UserGetEnterCodeMixin, generics.GenericAPIView):
         Возвращает форму для ввода номера телефона и получения кода.
         """
         serializer = self.serializer_class()
-        return Response({"serializer": serializer})
+
+        # Проверяем, что рендер используется для HTML
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, template_name=self.template_name)
+        # Возвращаем данные в формате JSON
+        return Response({"serializer": serializer.data})
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
+
         if serializer.is_valid():
             created = self.perform_get_or_create(serializer)
             message = "На указанный номер телефона выслан код для авторизации."
+
             if created:
+                if request.accepted_renderer.format == 'html':
+                    return Response(
+                        {"serializer": serializer, "message": message},
+                        status=status.HTTP_201_CREATED,
+                        template_name=self.template_name,
+                    )
+                return Response(
+                    {"serializer": serializer.data, "message": message},
+                    status=status.HTTP_201_CREATED,
+                )
+
+            if request.accepted_renderer.format == 'html':
+                message = "Код отправлен повторно."
                 return Response(
                     {"serializer": serializer, "message": message},
-                    status=status.HTTP_201_CREATED,
+                    status=status.HTTP_200_OK,
                     template_name=self.template_name,
                 )
             return Response(
-                {"serializer": serializer, "message": "Код отправлен повторно."},
+                {"serializer": serializer.data, "message": "Код отправлен повторно."},
                 status=status.HTTP_200_OK,
-                template_name=self.template_name,
             )
 
-        # Если данные невалидны, возвращаем тот же сериализатор с ошибками
-        return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
+        # Если данные невалидны, возвращаем ошибку
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST,
+                            template_name=self.template_name)
+        return Response({"serializer": serializer.data}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -125,7 +148,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
     Представление для получения токенов по номеру телефона.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     template_name = "send_code.html"
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
@@ -139,15 +162,28 @@ class MyTokenObtainPairView(TokenObtainPairView):
         :param kwargs: Дополнительные ключевые аргументы
         :return: Response с токеном или ошибками
         """
-        serializer = self.serializer_class()
+        # Получаем результат работы метода суперкласса
+        response = super().post(request, *args, **kwargs)
+
+        # Извлекаем данные токенов из ответа
+        tokens = response.data
+
+        # Печатаем токены для отладки
         print(
-            *[
-                f"{k}: {v}"
-                for k, v in super().post(request, *args, **kwargs).data.items()
-            ],
+            *[f"{k}: {v}" for k, v in tokens.items()],
             sep="\n",
         )
-        return Response({"serializer": serializer})
+
+        # Определяем формат ответа
+        if request.accepted_renderer.format == 'html':
+            serializer = self.serializer_class()
+            return Response(
+                {"serializer": serializer, "tokens": tokens},
+                status=status.HTTP_200_OK,
+                template_name=self.template_name
+            )
+        else:
+            return Response(tokens, status=status.HTTP_200_OK)
 
     def get(self, request, *args, **kwargs):
         """
@@ -159,7 +195,10 @@ class MyTokenObtainPairView(TokenObtainPairView):
         :return: Response с формой
         """
         serializer = self.serializer_class()
-        return Response({"serializer": serializer})
+        if request.accepted_renderer.format == 'html':
+            return Response({"serializer": serializer}, template_name=self.template_name)
+        else:
+            return Response({"detail": "This endpoint is for token submission."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyTokenRefreshView(TokenRefreshView):
@@ -167,7 +206,7 @@ class MyTokenRefreshView(TokenRefreshView):
     Представление для обновления токена.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "refresh.html"
     permission_classes = (AllowAny,)
 
@@ -180,15 +219,36 @@ class MyTokenRefreshView(TokenRefreshView):
         :param kwargs: Дополнительные ключевые аргументы
         :return: Response с новым токеном или ошибками
         """
-        serializer = self.get_serializer_class()()
-        print(
-            *[
-                f"{k}: {v}"
-                for k, v in super().post(request, *args, **kwargs).data.items()
-            ],
-            sep="\n",
-        )
-        return Response({"serializer": serializer})
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            token_data = serializer.validated_data
+
+            # Печать токенов для дебага (можно удалить позже)
+            print(
+                *[
+                    f"{k}: {v}"
+                    for k, v in token_data.items()
+                ],
+                sep="\n",
+            )
+
+            # Возвращаем JSON или HTML в зависимости от заголовка Accept
+            if request.accepted_renderer.format == 'html':
+                return Response(
+                    {"serializer": serializer, "token_data": token_data},
+                    template_name=self.template_name,
+                    status=status.HTTP_200_OK
+                )
+            return Response(token_data, status=status.HTTP_200_OK)
+
+        # Если данные невалидны, возвращаем ошибки в формате JSON или HTML
+        if request.accepted_renderer.format == 'html':
+            return Response(
+                {"serializer": serializer, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+                template_name=self.template_name
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, *args, **kwargs):
         """
@@ -200,8 +260,7 @@ class MyTokenRefreshView(TokenRefreshView):
         :return: Response с формой
         """
         serializer = self.get_serializer_class()()
-        return Response({"serializer": serializer})
-
+        return Response({"serializer": serializer}, template_name=self.template_name)
 
 class SetReferrerAPIView(views.APIView):
     """
@@ -209,7 +268,7 @@ class SetReferrerAPIView(views.APIView):
     """
 
     permission_classes = [IsAuthenticated]
-    renderer_classes = [TemplateHTMLRenderer]
+    renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "set_referrer.html"
 
     def post(self, request):
@@ -222,39 +281,27 @@ class SetReferrerAPIView(views.APIView):
         referral = request.user
 
         if not invite_code:
-            return Response(
-                {"error": "Инвайт-код не может быть пустым"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = "Инвайт-код не может быть пустым"
+            return self._build_response({"error": error_message}, status.HTTP_400_BAD_REQUEST)
 
         if referral.invite_code == invite_code:
-            return Response(
-                {"message": "Вы не можете ввести свой собственный инвайт-код"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = "Вы не можете ввести свой собственный инвайт-код"
+            return self._build_response({"message": error_message}, status.HTTP_400_BAD_REQUEST)
+
         if referral.invited_by is not None:
-            return Response(
-                {
-                    "message": f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            error_message = f"Вы уже являетесь рефералом пользователя с инвайт-кодом {referral.invited_by.invite_code}"
+            return self._build_response({"message": error_message}, status.HTTP_400_BAD_REQUEST)
 
         try:
             referer = User.objects.get(invite_code=invite_code)
         except User.DoesNotExist:
-            return Response(
-                {"error": "Пользователь с указанным инвайт-кодом не найден"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            error_message = "Пользователь с указанным инвайт-кодом не найден"
+            return self._build_response({"error": error_message}, status.HTTP_404_NOT_FOUND)
 
         referral.invited_by = referer
         referral.save()
-        return Response(
-            {
-                "message": f"Вы стали рефералом пользователя с инвайт-кодом {referer.invite_code}"
-            }
-        )
+        success_message = f"Вы стали рефералом пользователя с инвайт-кодом {referer.invite_code}"
+        return self._build_response({"message": success_message})
 
     def get(self, request, *args, **kwargs):
         """
@@ -262,14 +309,28 @@ class SetReferrerAPIView(views.APIView):
         :param request: Запрос от клиента
         :return: Response с информацией о реферале
         """
-        return Response()
+        referral = request.user.invited_by
+        if referral:
+            referrer_info = f"Ваш реферер: {referral.invite_code}"
+            return self._build_response({"message": referrer_info})
+        return self._build_response({"message": "У вас нет реферера"})
+
+    def _build_response(self, data, status_code=status.HTTP_200_OK):
+        """
+        Вспомогательный метод для построения ответа с поддержкой как HTML, так и JSON форматов.
+        :param data: Данные для ответа
+        :param status_code: HTTP статус код
+        :return: Response объект
+        """
+        if self.request.accepted_renderer.format == 'html':
+            return Response(data, status=status_code, template_name=self.template_name)
+        return Response(data, status=status_code)
 
 
 class UserRetrieveAPIView(generics.RetrieveAPIView):
     """
     Представление для получения профиля пользователя.
     """
-
     serializer_class = UserRetrieveSerializer
     permission_classes = [IsAuthenticated]
     renderer_classes = [TemplateHTMLRenderer]
@@ -278,7 +339,6 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
     def get_object(self):
         """
         Возвращает текущего пользователя.
-
         :return: Текущий пользователь
         """
         return self.request.user

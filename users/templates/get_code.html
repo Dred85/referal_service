@@ -8,11 +8,16 @@
             <div class="card">
                 <div class="card-body">
                     <p class="lead">Авторизуйтесь по номеру телефона.</p>
-                    <p class="lead">Введите 11 цифр Вашего номера телефона, пример:79063500890</p>
+                    <p class="lead">Введите 11 цифр Вашего номера телефона, пример: 79063500890</p>
                     {% csrf_token %}
                     {% render_form serializer %}
+
+                    {% if message %}
+                    <div class="alert alert-success">{{ message }}</div>
+                    {% endif %}
+
                     {% if error %}
-                        <div class="alert alert-danger">{{ error }}</div>
+                    <div class="alert alert-danger">{{ error }}</div>
                     {% endif %}
                 </div>
                 <button type="submit" class="btn btn-primary">

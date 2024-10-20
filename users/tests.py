@@ -52,7 +52,6 @@ class AuthTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
     def test_auth_backend(self):
         """
         Проверяет отправку кода с неверными учетными данными.
@@ -124,4 +123,3 @@ class AuthTestCase(APITestCase):
         response = self.client.post(url, data={"invite_code": "invalid_code"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("error", response.data)
-

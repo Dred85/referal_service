@@ -56,10 +56,10 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "phone",
-            "referrals",
             "invite_code",
             "invited_by_phone",
             "invite_code_referer",
+            "referrals",
         ]
 
 

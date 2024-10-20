@@ -4,13 +4,15 @@ services:
     restart: on-failure
     env_file:
       - .env
+    ports:
+      - "5432:5432"
     volumes:
-      - auth_refer_system:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
-      interval: 5s
-      retries: 5
+      interval: 10s
       timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -27,5 +29,7 @@ services:
       - .env
 
 volumes:
-  auth_refer_system:
+  pg_data:
     driver: local
+
+

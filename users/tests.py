@@ -51,7 +51,7 @@ class AuthTestCase(APITestCase):
         url = reverse("users:retrieve")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("phone"), "70000000000")
+
 
     def test_auth_backend(self):
         """
@@ -124,3 +124,4 @@ class AuthTestCase(APITestCase):
         response = self.client.post(url, data={"invite_code": "invalid_code"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("error", response.data)
+

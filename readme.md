@@ -94,13 +94,17 @@ response:
   
 response:     
    
-{   
-    "phone": "79444444446",    
-    "referrals": ["+79000000002", "+79000000003"],    
-    "invite_code": "vIIaww",    
-    "invited_by_phone": "+79000000001",   
-    "invite_code_referer": "cAXcJR"    
-}     
+{
+    "phone": "79444444448",
+    "invite_code": "2T7QkF",
+    "invited_by_phone": "+79000000001",
+    "invite_code_referer": "cAXcJR",
+    "referrals": [
+        "79000000000",
+        "79000000001",
+        "79444444447"
+    ]
+}   
     
 ### 5. request: POST /users/set_referrer/     
 Описание: Принимает инвайт код другого пользователя, возвращает сообщение о становлении рефералом другого пользователя          

@@ -4,23 +4,28 @@
 <div class="album py-5 bg-body-tertiary">
     <div class="container">
 
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-            <div class="col">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <p class="card-text"><strong>Пользователь с телефоном: +{{ phone }}</strong></p>
-                        <p class="card-text">Поделитесь Вашим инвайт-кодом с другими: {{ invite_code }}</p>
-                        <p class="card-text">Номер Пользователя, который Вас пригласил: {{ invited_by_phone }}</p>
-                        <p class="card-text">Использованный Вами инвайт-код: {{ invite_code_referer }}</p>
-                        <p class="card-text">Пользователи, которых Вы пригласили:</p>
-                        <ul>
-                            {% for referral in referrals %}
-                            <li>+ {{ referral }}</li>
-                            {% endfor %}
-                        </ul>
-
-                    </div>
-                </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="card-text">
+                    <strong>Пользователь с телефоном: +{{ user.phone }}</strong>
+                </p>
+                <p class="card-text">
+                    Поделитесь Вашим инвайт-кодом с другими: {{ user.invite_code }}
+                </p>
+                <p class="card-text">
+                    Номер Пользователя, который Вас пригласил: {{ user.invited_by_phone }}
+                </p>
+                <p class="card-text">
+                    Использованный Вами инвайт-код: {{ user.invite_code_referer }}
+                </p>
+                <p class="card-text">Пользователи, которых Вы пригласили:</p>
+                <ul>
+                    {% for referred_user in user.referrals %}
+                    <li>{{ referred_user.phone_number }}</li>
+                    {% empty %}
+                    <li>Никто пока не был приглашен.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
 

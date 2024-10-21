@@ -5,13 +5,14 @@ from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
-from rest_framework_simplejwt.views import (TokenObtainPairView,
-                                            TokenRefreshView)
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from users.serializers import (MyTokenObtainPairSerializer,
-                               UserPhoneSerializer, UserRetrieveSerializer)
-from users.services import (create_enter_code, create_invite_code,
-                            send_enter_code)
+from users.serializers import (
+    MyTokenObtainPairSerializer,
+    UserPhoneSerializer,
+    UserRetrieveSerializer,
+)
+from users.services import create_enter_code, create_invite_code, send_enter_code
 
 User = get_user_model()
 
@@ -234,7 +235,7 @@ class MyTokenRefreshView(TokenRefreshView):
             # Возвращаем HTML-ответ с новым токеном
             if request.accepted_renderer.format == "html":
                 return Response(
-                    {"serializer": serializer, "access_token": token_data['access']},
+                    {"serializer": serializer, "access_token": token_data["access"]},
                     template_name=self.template_name,
                     status=status.HTTP_200_OK,
                 )
@@ -255,6 +256,7 @@ class MyTokenRefreshView(TokenRefreshView):
         """
         serializer = TokenRefreshSerializer()
         return Response({"serializer": serializer}, template_name=self.template_name)
+
 
 class SetReferrerAPIView(views.APIView):
     """

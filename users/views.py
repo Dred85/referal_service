@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 
@@ -225,32 +226,21 @@ class MyTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         """
         Обрабатывает POST-запрос для обновления токена.
-
-        :param request: Запрос от клиента
-        :param args: Дополнительные аргументы
-        :param kwargs: Дополнительные ключевые аргументы
-        :return: Response с новым токеном или ошибками
         """
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             token_data = serializer.validated_data
 
-            # Печать токенов для дебага (можно удалить позже)
-            print(
-                *[f"{k}: {v}" for k, v in token_data.items()],
-                sep="\n",
-            )
-
-            # Возвращаем JSON или HTML в зависимости от заголовка Accept
+            # Возвращаем HTML-ответ с новым токеном
             if request.accepted_renderer.format == "html":
                 return Response(
-                    {"serializer": serializer, "token_data": token_data},
+                    {"serializer": serializer, "access_token": token_data['access']},
                     template_name=self.template_name,
                     status=status.HTTP_200_OK,
                 )
             return Response(token_data, status=status.HTTP_200_OK)
 
-        # Если данные невалидны, возвращаем ошибки в формате JSON или HTML
+        # Если данные невалидны, возвращаем ошибки
         if request.accepted_renderer.format == "html":
             return Response(
                 {"serializer": serializer, "errors": serializer.errors},
@@ -262,15 +252,9 @@ class MyTokenRefreshView(TokenRefreshView):
     def get(self, request, *args, **kwargs):
         """
         Обрабатывает GET-запрос, возвращая форму для обновления токена.
-
-        :param request: Запрос от клиента
-        :param args: Дополнительные аргументы
-        :param kwargs: Дополнительные ключевые аргументы
-        :return: Response с формой
         """
-        serializer = self.get_serializer_class()()
+        serializer = TokenRefreshSerializer()
         return Response({"serializer": serializer}, template_name=self.template_name)
-
 
 class SetReferrerAPIView(views.APIView):
     """

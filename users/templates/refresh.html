@@ -1,19 +1,39 @@
 {% extends 'base.html' %}
 {% block content %}
-{% load rest_framework %}
-
 <div class="container">
-    <form class="row" method="post" enctype="multipart/form-data">
+    <form class="row" method="post">
         <div class="col-6">
             <div class="card">
                 <div class="card-body">
                     {% csrf_token %}
-                    {% render_form serializer %}
+
+                    <!-- Поле для ввода refresh токена -->
+                    <div class="form-group">
+                        <label for="refresh">Refresh Token:</label>
+                        <input type="text" name="refresh" class="form-control" id="refresh" required>
+                    </div>
+
+                    <!-- Кнопка для обновления токена -->
+                    <button type="submit" class="btn btn-primary">
+                        Обновить токен
+                    </button>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    Обновить токен
-                </button>
             </div>
+
+            <!-- Отображение нового токена при успешной валидации -->
+            {% if access_token %}
+                <div class="alert alert-success mt-3">
+                    <strong>Новый Access Token:</strong> {{ access_token }}
+                </div>
+            {% endif %}
+
+            <!-- Отображение ошибок валидации -->
+            {% if errors %}
+                <div class="alert alert-danger mt-3">
+                    <strong>Ошибка:</strong>
+                    {{ errors }}
+                </div>
+            {% endif %}
         </div>
     </form>
 </div>

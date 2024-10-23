@@ -270,8 +270,6 @@ class SetReferrerAPIView(views.APIView):
     def post(self, request):
         """
         Обрабатывает POST-запрос для установки реферала.
-        :param request: Запрос от клиента
-        :return: Response с результатом установки реферала
         """
         invite_code = request.data.get("invite_code", "")
         referral = request.user
@@ -312,8 +310,6 @@ class SetReferrerAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
         """
         Обрабатывает GET-запрос, возвращая информацию о реферале.
-        :param request: Запрос от клиента
-        :return: Response с информацией о реферале
         """
         referral = request.user.invited_by
         if referral:
@@ -324,12 +320,11 @@ class SetReferrerAPIView(views.APIView):
     def _build_response(self, data, status_code=status.HTTP_200_OK):
         """
         Вспомогательный метод для построения ответа с поддержкой как HTML, так и JSON форматов.
-        :param data: Данные для ответа
-        :param status_code: HTTP статус код
-        :return: Response объект
         """
         if self.request.accepted_renderer.format == "html":
-            return Response(data, status=status_code, template_name=self.template_name)
+            return Response(
+                {"context": data}, status=status_code, template_name=self.template_name
+            )
         return Response(data, status=status_code)
 
 

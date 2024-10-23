@@ -2,8 +2,12 @@ from django.urls import path
 
 from users import views
 from users.apps import UsersConfig
-from users.views import (MyTokenObtainPairView, MyTokenRefreshView,
-                         SetReferrerAPIView, UserRetrieveAPIView)
+from users.views import (
+    MyTokenObtainPairView,
+    MyTokenRefreshView,
+    SetReferrerAPIView,
+    UserRetrieveAPIView,
+)
 
 app_name = UsersConfig.name
 

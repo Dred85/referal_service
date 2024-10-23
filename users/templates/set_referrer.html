@@ -8,7 +8,19 @@
             <div class="card">
                 <div class="card-body">
                     {% csrf_token %}
-                    <label>Введите инвайт-код<input type="text"/></label>
+                    <label>Введите инвайт-код:
+                        <input type="text" name="invite_code" value=""/>
+                    </label>
+                    {% if context.message %}
+                        <div class="alert alert-success">
+                            {{ context.message }}
+                        </div>
+                    {% endif %}
+                    {% if context.error %}
+                        <div class="alert alert-danger">
+                            {{ context.error }}
+                        </div>
+                    {% endif %}
                 </div>
                 <button type="submit" class="btn btn-primary">
                     Отправить

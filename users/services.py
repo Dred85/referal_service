@@ -52,9 +52,9 @@ def send_enter_code(phone: object, code: object) -> object:
     # Преобразуем наш номер из строки в int
     phone = int(phone)
     try:
-        "Реально отправляем смс с кодом из 4 цифр на реальный номер"
-        result = send_sms(phone, code)
-        pprint(result)
+        # "Реально отправляем смс с кодом из 4 цифр на реальный номер"
+        # result = send_sms(phone, code)
+        # pprint(result)
         print(f"phone: {phone} | code: {code}")
 
     except SmsAeroException as e:

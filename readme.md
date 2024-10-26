@@ -161,6 +161,10 @@ response:
 - "Вы не можете ввести свой собственный инвайт-код"   
 
 
+    
+Запуск тестов в контейнере:    
+- sudo docker-compose exec app bash   
+- python manage.py test   
 
 
 

@@ -21,7 +21,7 @@
                 <p class="card-text">Пользователи, которых Вы пригласили:</p>
                 <ul>
                     {% for referred_user in user.referrals %}
-                    <li>{{ referred_user.phone_number }}</li>
+                    <li>{{ referred_user }}</li>
                     {% empty %}
                     <li>Никто пока не был приглашен.</li>
                     {% endfor %}
